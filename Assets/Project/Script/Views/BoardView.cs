@@ -7,12 +7,10 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
-namespace Gazeus.DesafioMatch3.Views
-{
-    public class BoardView : MonoBehaviour
-    {
+namespace Gazeus.DesafioMatch3.Views {
+    public class BoardView : MonoBehaviour {
         public event Action<int, int> TileClicked;
-
+        [SerializeField] private RectTransform _boardContainerRect;
         [SerializeField] private GridLayoutGroup _boardContainer;
         [SerializeField] private TilePrefabRepository _tilePrefabRepository;
         [SerializeField] private TileSpotView _tileSpotPrefab;
@@ -23,31 +21,28 @@ namespace Gazeus.DesafioMatch3.Views
         private readonly Dictionary<GameObject, int> _tilePoolIndexes = new();
         private Transform _tilePoolRoot;
 
-        public void CreateBoard(List<List<Tile>> board)
-        {
+        public void CreateBoard(List<List<Tile>> board) {
+            UpdateCellSize();
+
             _boardContainer.constraintCount = board[0].Count;
             InitializeTilePools(board.Count * board[0].Count);
 
             _tiles = new GameObject[board.Count][];
             _tileSpots = new TileSpotView[board.Count][];
 
-            for (int y = 0; y < board.Count; y++)
-            {
+            for (int y = 0; y < board.Count; y++) {
                 _tiles[y] = new GameObject[board[0].Count];
                 _tileSpots[y] = new TileSpotView[board[0].Count];
 
-                for (int x = 0; x < board[0].Count; x++)
-                {
-                    TileSpotView tileSpot = Instantiate(_tileSpotPrefab);
-                    tileSpot.transform.SetParent(_boardContainer.transform, false);
+                for (int x = 0; x < board[0].Count; x++) {
+                    TileSpotView tileSpot = Instantiate(_tileSpotPrefab, _boardContainer.transform, false);
                     tileSpot.SetPosition(x, y);
                     tileSpot.Clicked += TileSpot_Clicked;
 
                     _tileSpots[y][x] = tileSpot;
 
                     int tileTypeIndex = board[y][x].Type;
-                    if (tileTypeIndex > -1)
-                    {
+                    if (tileTypeIndex > -1) {
                         GameObject tile = GetTileFromPool(tileTypeIndex);
                         tileSpot.SetTile(tile);
 
@@ -57,11 +52,31 @@ namespace Gazeus.DesafioMatch3.Views
             }
         }
 
-        public Tween CreateTile(List<AddedTileInfo> addedTiles)
-        {
+        private void UpdateCellSize() {
+            float containerWidth = _boardContainerRect.rect.width;
+            float containerHeight = _boardContainerRect.rect.height;
+
+            // Calculate available cell size space discounting the GridLayout padding
+            float totalSpacingX = _boardContainer.spacing.x * (_boardContainer.constraintCount - 1);
+            float totalSpacingY = _boardContainer.spacing.y * (_boardContainer.constraintCount - 1);
+
+            float availableWidth = containerWidth - _boardContainer.padding.left - _boardContainer.padding.right -
+                                   totalSpacingX;
+            float availableHeight = containerHeight - _boardContainer.padding.top - _boardContainer.padding.bottom -
+                                    totalSpacingY;
+
+            // Calculate the ideal sell size considering square cells
+            float cellSizeByWidth = availableWidth / _boardContainer.constraintCount;
+            float cellSizeByHeight = availableHeight / _boardContainer.constraintCount;
+
+            float finalCellSize = Mathf.Min(cellSizeByWidth, cellSizeByHeight);
+
+            _boardContainer.cellSize = new Vector2(finalCellSize, finalCellSize);
+        }
+
+        public Tween CreateTile(List<AddedTileInfo> addedTiles) {
             Sequence sequence = DOTween.Sequence();
-            for (int i = 0; i < addedTiles.Count; i++)
-            {
+            for (int i = 0; i < addedTiles.Count; i++) {
                 AddedTileInfo addedTileInfo = addedTiles[i];
                 Vector2Int position = addedTileInfo.Position;
 
@@ -79,10 +94,8 @@ namespace Gazeus.DesafioMatch3.Views
             return sequence;
         }
 
-        public Tween DestroyTiles(List<Vector2Int> matchedPosition)
-        {
-            for (int i = 0; i < matchedPosition.Count; i++)
-            {
+        public Tween DestroyTiles(List<Vector2Int> matchedPosition) {
+            for (int i = 0; i < matchedPosition.Count; i++) {
                 Vector2Int position = matchedPosition[i];
                 ReleaseTileToPool(_tiles[position.y][position.x]);
                 _tiles[position.y][position.x] = null;
@@ -91,21 +104,17 @@ namespace Gazeus.DesafioMatch3.Views
             return DOVirtual.DelayedCall(0.2f, () => { });
         }
 
-        public Tween MoveTiles(List<MovedTileInfo> movedTiles)
-        {
+        public Tween MoveTiles(List<MovedTileInfo> movedTiles) {
             GameObject[][] tiles = new GameObject[_tiles.Length][];
-            for (int y = 0; y < _tiles.Length; y++)
-            {
+            for (int y = 0; y < _tiles.Length; y++) {
                 tiles[y] = new GameObject[_tiles[y].Length];
-                for (int x = 0; x < _tiles[y].Length; x++)
-                {
+                for (int x = 0; x < _tiles[y].Length; x++) {
                     tiles[y][x] = _tiles[y][x];
                 }
             }
 
             Sequence sequence = DOTween.Sequence();
-            for (int i = 0; i < movedTiles.Count; i++)
-            {
+            for (int i = 0; i < movedTiles.Count; i++) {
                 MovedTileInfo movedTileInfo = movedTiles[i];
 
                 Vector2Int from = movedTileInfo.From;
@@ -121,8 +130,7 @@ namespace Gazeus.DesafioMatch3.Views
             return sequence;
         }
 
-        public Tween SwapTiles(int fromX, int fromY, int toX, int toY)
-        {
+        public Tween SwapTiles(int fromX, int fromY, int toX, int toY) {
             Sequence sequence = DOTween.Sequence();
             sequence.Append(_tileSpots[fromY][fromX].AnimatedSetTile(_tiles[toY][toX]));
             sequence.Join(_tileSpots[toY][toX].AnimatedSetTile(_tiles[fromY][fromX]));
@@ -131,21 +139,18 @@ namespace Gazeus.DesafioMatch3.Views
 
             return sequence;
         }
-        
-        public Tween MarkSpecialTiles(List<CreatedSpecialTileInfo> createdSpecialTiles)
-        {
+
+        public Tween MarkSpecialTiles(List<CreatedSpecialTileInfo> createdSpecialTiles) {
             Sequence sequence = DOTween.Sequence();
 
-            for (int i = 0; i < createdSpecialTiles.Count; i++)
-            {
+            for (int i = 0; i < createdSpecialTiles.Count; i++) {
                 CreatedSpecialTileInfo specialTile = createdSpecialTiles[i];
                 Vector2Int position = specialTile.Position;
 
                 GameObject tile = _tiles[position.y][position.x];
 
                 int specialTilePrefabIndex = GetSpecialTilePrefabIndex(specialTile.SpecialType);
-                if (tile == null || specialTilePrefabIndex < 0)
-                {
+                if (tile == null || specialTilePrefabIndex < 0) {
                     continue;
                 }
 
@@ -157,7 +162,7 @@ namespace Gazeus.DesafioMatch3.Views
 
                 tileSpot.SetTile(specialTileObject);
                 _tiles[position.y][position.x] = specialTileObject;
-                
+
                 specialTileObject.transform.localScale = Vector2.zero;
                 sequence.Join(specialTileObject.transform.DOScale(1f, 0.15f));
             }
@@ -165,10 +170,8 @@ namespace Gazeus.DesafioMatch3.Views
             return sequence;
         }
 
-        private static int GetSpecialTilePrefabIndex(TileSpecialType specialType)
-        {
-            return specialType switch
-            {
+        private static int GetSpecialTilePrefabIndex(TileSpecialType specialType) {
+            return specialType switch {
                 TileSpecialType.ClearHorizontal => 4,
                 TileSpecialType.ClearVertical => 5,
                 TileSpecialType.ClearArea => 6,
@@ -271,10 +274,15 @@ namespace Gazeus.DesafioMatch3.Views
         }
 
         #region Events
-        private void TileSpot_Clicked(int x, int y)
-        {
+
+        private void TileSpot_Clicked(int x, int y) {
             TileClicked(x, y);
         }
+
         #endregion
+
+        private void OnRectTransformDimensionsChange() {
+            UpdateCellSize();
+        }
     }
 }

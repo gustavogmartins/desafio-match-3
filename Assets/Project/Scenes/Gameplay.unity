@@ -169,6 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 798450fb7fe04d348a5c6925c8045d26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _boardContainerRect: {fileID: 429446042}
   _boardContainer: {fileID: 429446045}
   _tilePrefabRepository: {fileID: 11400000, guid: 153eac3747f207a40add49ed6e2dacb9, type: 2}
   _tileSpotPrefab: {fileID: -4864831497923239132, guid: 6527630aaec5689489d14bfbb482fd0f, type: 3}
@@ -540,6 +541,7 @@ MonoBehaviour:
   _boardView: {fileID: 429446043}
   _boardHeight: 10
   _boardWidth: 10
+  _doubleClickInterval: 0.3
 --- !u!4 &1361904665
 Transform:
   m_ObjectHideFlags: 0
