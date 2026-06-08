@@ -127,6 +127,51 @@ namespace Gazeus.DesafioMatch3.Views
 
             return sequence;
         }
+        
+        public Tween MarkSpecialTiles(List<CreatedSpecialTileInfo> createdSpecialTiles)
+        {
+            Sequence sequence = DOTween.Sequence();
+
+            for (int i = 0; i < createdSpecialTiles.Count; i++)
+            {
+                CreatedSpecialTileInfo specialTile = createdSpecialTiles[i];
+                Vector2Int position = specialTile.Position;
+
+                GameObject tile = _tiles[position.y][position.x];
+
+                int specialTilePrefabIndex = GetSpecialTilePrefabIndex(specialTile.SpecialType);
+                if (tile == null || specialTilePrefabIndex < 0)
+                {
+                    continue;
+                }
+
+                Destroy(tile);
+
+                TileSpotView tileSpot = _tileSpots[position.y][position.x];
+                GameObject specialTilePrefab = _tilePrefabRepository.TileTypePrefabList[specialTilePrefabIndex];
+                GameObject specialTileObject = Instantiate(specialTilePrefab);
+                specialTileObject.name = $"Special_{specialTile.SpecialType}_{specialTileObject.name}";
+
+                tileSpot.SetTile(specialTileObject);
+                _tiles[position.y][position.x] = specialTileObject;
+                
+                specialTileObject.transform.localScale = Vector2.zero;
+                sequence.Join(specialTileObject.transform.DOScale(1f, 0.15f));
+            }
+
+            return sequence;
+        }
+
+        private static int GetSpecialTilePrefabIndex(TileSpecialType specialType)
+        {
+            return specialType switch
+            {
+                TileSpecialType.ClearHorizontal => 4,
+                TileSpecialType.ClearVertical => 5,
+                TileSpecialType.ClearArea => 6,
+                _ => -1
+            };
+        }
 
         #region Events
         private void TileSpot_Clicked(int x, int y)

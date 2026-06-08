@@ -78,16 +78,20 @@ namespace Gazeus.DesafioMatch3.Core
                         SpecialType = TileSpecialType.None
                     };
                 }
-
+                
+                List<CreatedSpecialTileInfo> createdSpecialTiles = new();
                 foreach (KeyValuePair<Vector2Int, SpecialTileCreationInfo> pair in specialTilesToCreate) {
                     Vector2Int position = pair.Key;
                     SpecialTileCreationInfo specialTile = pair.Value;
 
-                    newBoard[position.y][position.x] = new Tile {
-                        Id = _tileCount++,
+                    createdSpecialTiles.Add(new CreatedSpecialTileInfo
+                    {
+                        Position = position,
                         Type = specialTile.Type,
                         SpecialType = specialTile.SpecialType
-                    };
+                    });
+
+                    newBoard[position.y][position.x] = CreateSpecialTile(specialTile);
                 }
 
                 // Dropping the tiles
@@ -125,7 +129,8 @@ namespace Gazeus.DesafioMatch3.Core
                         newBoard[0][x] = new Tile
                         {
                             Id = -1,
-                            Type = -1
+                            Type = -1,
+                            SpecialType = TileSpecialType.None
                         };
                     }
                 }
@@ -142,6 +147,7 @@ namespace Gazeus.DesafioMatch3.Core
                             Tile tile = newBoard[y][x];
                             tile.Id = _tileCount++;
                             tile.Type = _tilesTypes[tileType];
+                            tile.SpecialType = TileSpecialType.None;
                             addedTiles.Add(new AddedTileInfo
                             {
                                 Position = new Vector2Int(x, y),
@@ -156,7 +162,8 @@ namespace Gazeus.DesafioMatch3.Core
                     MatchGroups = matchGroups,
                     RemovedPositions = removedPositions,
                     MovedTiles = movedTilesList,
-                    AddedTiles = addedTiles
+                    AddedTiles = addedTiles,
+                    CreatedSpecialTiles = createdSpecialTiles
                 };
 
                 boardSequences.Add(sequence);
@@ -192,7 +199,12 @@ namespace Gazeus.DesafioMatch3.Core
                 board.Add(new List<Tile>(width));
                 for (int x = 0; x < width; x++)
                 {
-                    board[y].Add(new Tile { Id = -1, Type = -1 });
+                    board[y].Add(new Tile
+                    {
+                        Id = -1,
+                        Type = -1,
+                        SpecialType = TileSpecialType.None
+                    });
                 }
             }
 
@@ -220,6 +232,7 @@ namespace Gazeus.DesafioMatch3.Core
 
                     board[y][x].Id = _tileCount++;
                     board[y][x].Type = noMatchTypes[Random.Range(0, noMatchTypes.Count)];
+                    board[y][x].SpecialType = TileSpecialType.None;
                 }
             }
 
@@ -333,6 +346,16 @@ namespace Gazeus.DesafioMatch3.Core
             }
 
             return matchGroup.Positions[matchGroup.Positions.Count / 2];
+        }
+
+        private Tile CreateSpecialTile(SpecialTileCreationInfo specialTile)
+        {
+            return new Tile
+            {
+                Id = _tileCount++,
+                Type = specialTile.Type,
+                SpecialType = specialTile.SpecialType
+            };
         }
     }
 }
