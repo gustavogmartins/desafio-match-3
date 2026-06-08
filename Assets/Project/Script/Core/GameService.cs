@@ -15,28 +15,7 @@ namespace Gazeus.DesafioMatch3.Core
             List<List<Tile>> newBoard = CopyBoard(_boardTiles);
 
             (newBoard[toY][toX], newBoard[fromY][fromX]) = (newBoard[fromY][fromX], newBoard[toY][toX]);
-
-            for (int y = 0; y < newBoard.Count; y++)
-            {
-                for (int x = 0; x < newBoard[y].Count; x++)
-                {
-                    if (x > 1 &&
-                        newBoard[y][x].Type == newBoard[y][x - 1].Type &&
-                        newBoard[y][x - 1].Type == newBoard[y][x - 2].Type)
-                    {
-                        return true;
-                    }
-
-                    if (y > 1 &&
-                        newBoard[y][x].Type == newBoard[y - 1][x].Type &&
-                        newBoard[y - 1][x].Type == newBoard[y - 2][x].Type)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return FindMatchGroups(newBoard).Count > 0;
         }
 
         public List<List<Tile>> StartGame(int boardWidth, int boardHeight)
@@ -54,22 +33,16 @@ namespace Gazeus.DesafioMatch3.Core
             (newBoard[toY][toX], newBoard[fromY][fromX]) = (newBoard[fromY][fromX], newBoard[toY][toX]);
 
             List<BoardSequence> boardSequences = new();
-            List<List<bool>> matchedTiles = FindMatches(newBoard);
 
-            while (HasMatch(matchedTiles))
+            List<MatchGroup> matchGroups = FindMatchGroups(newBoard);
+            
+            while (matchGroups.Count > 0)
             {
-                //Cleaning the matched tiles
-                List<Vector2Int> matchedPosition = new();
-                for (int y = 0; y < newBoard.Count; y++)
+                List<Vector2Int> matchedPosition = GetUniqueMatchedPositions(matchGroups);
+                for (int i = 0; i < matchedPosition.Count; i++)
                 {
-                    for (int x = 0; x < newBoard[y].Count; x++)
-                    {
-                        if (matchedTiles[y][x])
-                        {
-                            matchedPosition.Add(new Vector2Int(x, y));
-                            newBoard[y][x] = new Tile { Id = -1, Type = -1 };
-                        }
-                    }
+                    Vector2Int position = matchedPosition[i];
+                    newBoard[position.y][position.x] = new Tile { Id = -1, Type = -1 };
                 }
 
                 // Dropping the tiles
@@ -135,16 +108,17 @@ namespace Gazeus.DesafioMatch3.Core
 
                 BoardSequence sequence = new()
                 {
+                    MatchGroups = matchGroups,
                     MatchedPosition = matchedPosition,
                     MovedTiles = movedTilesList,
                     AddedTiles = addedTiles
                 };
+
                 boardSequences.Add(sequence);
-                matchedTiles = FindMatches(newBoard);
+                matchGroups = FindMatchGroups(newBoard);
             }
 
             _boardTiles = newBoard;
-
             return boardSequences;
         }
 
@@ -207,59 +181,91 @@ namespace Gazeus.DesafioMatch3.Core
             return board;
         }
 
-        private static List<List<bool>> FindMatches(List<List<Tile>> newBoard)
-        {
-            List<List<bool>> matchedTiles = new();
-            for (int y = 0; y < newBoard.Count; y++)
-            {
-                matchedTiles.Add(new List<bool>(newBoard[y].Count));
-                for (int x = 0; x < newBoard.Count; x++)
-                {
-                    matchedTiles[y].Add(false);
-                }
-            }
+        private static List<MatchGroup> FindMatchGroups(List<List<Tile>> board) {
+            List<MatchGroup> matchGroups = new();
 
-            for (int y = 0; y < newBoard.Count; y++)
-            {
-                for (int x = 0; x < newBoard[y].Count; x++)
-                {
-                    if (x > 1 &&
-                        newBoard[y][x].Type == newBoard[y][x - 1].Type &&
-                        newBoard[y][x - 1].Type == newBoard[y][x - 2].Type)
-                    {
-                        matchedTiles[y][x] = true;
-                        matchedTiles[y][x - 1] = true;
-                        matchedTiles[y][x - 2] = true;
+            for (int y = 0; y < board.Count; y++) {
+                int x = 0;
+
+                while (x < board[y].Count) {
+                    int startX = x;
+                    int type = board[y][x].Type;
+
+                    while (x < board[y].Count && board[y][x].Type == type) {
+                        x++;
                     }
 
-                    if (y > 1 &&
-                        newBoard[y][x].Type == newBoard[y - 1][x].Type &&
-                        newBoard[y - 1][x].Type == newBoard[y - 2][x].Type)
-                    {
-                        matchedTiles[y][x] = true;
-                        matchedTiles[y - 1][x] = true;
-                        matchedTiles[y - 2][x] = true;
+                    int size = x - startX;
+
+                    if (type > -1 && size >= 3) {
+                        List<Vector2Int> positions = new();
+
+                        for (int matchX = startX; matchX < x; matchX++) {
+                            positions.Add(new Vector2Int(matchX, y));
+                        }
+
+                        matchGroups.Add(new MatchGroup {
+                            Type = type,
+                            Direction = MatchDirection.Horizontal,
+                            Positions = positions
+                        });
                     }
                 }
             }
 
-            return matchedTiles;
+            int width = board[0].Count;
+
+            for (int x = 0; x < width; x++) {
+                int y = 0;
+
+                while (y < board.Count) {
+                    int startY = y;
+                    int type = board[y][x].Type;
+
+                    while (y < board.Count && board[y][x].Type == type) {
+                        y++;
+                    }
+
+                    int size = y - startY;
+
+                    if (type > -1 && size >= 3) {
+                        List<Vector2Int> positions = new();
+
+                        for (int matchY = startY; matchY < y; matchY++) {
+                            positions.Add(new Vector2Int(x, matchY));
+                        }
+
+                        matchGroups.Add(new MatchGroup {
+                            Type = type,
+                            Direction = MatchDirection.Vertical,
+                            Positions = positions
+                        });
+                    }
+                }
+            }
+            return matchGroups;
         }
 
-        private static bool HasMatch(List<List<bool>> list)
-        {
-            for (int y = 0; y < list.Count; y++)
-            {
-                for (int x = 0; x < list[y].Count; x++)
-                {
-                    if (list[y][x])
-                    {
-                        return true;
-                    }
+        private static List<Vector2Int> GetUniqueMatchedPositions(List<MatchGroup> matchGroups) {
+            HashSet<Vector2Int> uniquePositions = new();
+
+            for (int i = 0; i < matchGroups.Count; i++) {
+                MatchGroup matchGroup = matchGroups[i];
+
+                for (int j = 0; j < matchGroup.Positions.Count; j++) {
+                    uniquePositions.Add(matchGroup.Positions[j]);
                 }
             }
 
-            return false;
+            //Ordering the positions to avoid processing the drop of tiles incorrectly when multiple tiles are removed
+            List<Vector2Int> positions = new(uniquePositions);
+            positions.Sort((a, b) =>
+            {
+                int yComparison = a.y.CompareTo(b.y);
+                return yComparison != 0 ? yComparison : a.x.CompareTo(b.x);
+            });
+
+            return positions;
         }
     }
 }
