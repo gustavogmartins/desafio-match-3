@@ -4,6 +4,7 @@ using DG.Tweening;
 using Gazeus.DesafioMatch3.Models;
 using Gazeus.DesafioMatch3.ScriptableObjects;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace Gazeus.DesafioMatch3.Views
@@ -18,10 +19,15 @@ namespace Gazeus.DesafioMatch3.Views
 
         private GameObject[][] _tiles;
         private TileSpotView[][] _tileSpots;
+        private ObjectPool<GameObject>[] _tilePools;
+        private readonly Dictionary<GameObject, int> _tilePoolIndexes = new();
+        private Transform _tilePoolRoot;
 
         public void CreateBoard(List<List<Tile>> board)
         {
             _boardContainer.constraintCount = board[0].Count;
+            InitializeTilePools(board.Count * board[0].Count);
+
             _tiles = new GameObject[board.Count][];
             _tileSpots = new TileSpotView[board.Count][];
 
@@ -42,8 +48,7 @@ namespace Gazeus.DesafioMatch3.Views
                     int tileTypeIndex = board[y][x].Type;
                     if (tileTypeIndex > -1)
                     {
-                        GameObject tilePrefab = _tilePrefabRepository.TileTypePrefabList[tileTypeIndex];
-                        GameObject tile = Instantiate(tilePrefab);
+                        GameObject tile = GetTileFromPool(tileTypeIndex);
                         tileSpot.SetTile(tile);
 
                         _tiles[y][x] = tile;
@@ -62,8 +67,7 @@ namespace Gazeus.DesafioMatch3.Views
 
                 TileSpotView tileSpot = _tileSpots[position.y][position.x];
 
-                GameObject tilePrefab = _tilePrefabRepository.TileTypePrefabList[addedTileInfo.Type];
-                GameObject tile = Instantiate(tilePrefab);
+                GameObject tile = GetTileFromPool(addedTileInfo.Type);
                 tileSpot.SetTile(tile);
 
                 _tiles[position.y][position.x] = tile;
@@ -80,7 +84,7 @@ namespace Gazeus.DesafioMatch3.Views
             for (int i = 0; i < matchedPosition.Count; i++)
             {
                 Vector2Int position = matchedPosition[i];
-                Destroy(_tiles[position.y][position.x]);
+                ReleaseTileToPool(_tiles[position.y][position.x]);
                 _tiles[position.y][position.x] = null;
             }
 
@@ -145,11 +149,10 @@ namespace Gazeus.DesafioMatch3.Views
                     continue;
                 }
 
-                Destroy(tile);
+                ReleaseTileToPool(tile);
 
                 TileSpotView tileSpot = _tileSpots[position.y][position.x];
-                GameObject specialTilePrefab = _tilePrefabRepository.TileTypePrefabList[specialTilePrefabIndex];
-                GameObject specialTileObject = Instantiate(specialTilePrefab);
+                GameObject specialTileObject = GetTileFromPool(specialTilePrefabIndex);
                 specialTileObject.name = $"Special_{specialTile.SpecialType}_{specialTileObject.name}";
 
                 tileSpot.SetTile(specialTileObject);
@@ -171,6 +174,100 @@ namespace Gazeus.DesafioMatch3.Views
                 TileSpecialType.ClearArea => 6,
                 _ => -1
             };
+        }
+
+        private void InitializeTilePools(int boardTileCount) {
+            if (_tilePools != null) {
+                return;
+            }
+
+            EnsureTilePoolRoot();
+
+            GameObject[] tilePrefabs = _tilePrefabRepository.TileTypePrefabList;
+            int poolSize = Mathf.Max(1, boardTileCount);
+            _tilePools = new ObjectPool<GameObject>[tilePrefabs.Length];
+
+            for (int i = 0; i < tilePrefabs.Length; i++) {
+                int prefabIndex = i;
+                _tilePools[prefabIndex] = new ObjectPool<GameObject>(
+                    createFunc: () => CreatePooledTile(prefabIndex),
+                    actionOnGet: tile => OnGetPooledTile(tile, prefabIndex),
+                    actionOnRelease: OnReleasePooledTile,
+                    actionOnDestroy: OnDestroyPooledTile,
+                    collectionCheck: true,
+                    defaultCapacity: poolSize,
+                    maxSize: poolSize);
+            }
+        }
+
+        private void EnsureTilePoolRoot() {
+            if (_tilePoolRoot != null) {
+                return;
+            }
+
+            GameObject poolRoot = new("TilePoolRoot");
+            Transform boardContainerTransform = _boardContainer.transform;
+            Transform poolParent = boardContainerTransform.parent;
+            poolRoot.transform.SetParent(poolParent, false);
+            _tilePoolRoot = poolRoot.transform;
+        }
+
+        private GameObject GetTileFromPool(int prefabIndex) {
+            if (prefabIndex < 0 || _tilePools == null || prefabIndex >= _tilePools.Length) {
+                throw new ArgumentOutOfRangeException(nameof(prefabIndex), prefabIndex, "Invalid tile prefab index.");
+            }
+
+            return _tilePools[prefabIndex].Get();
+        }
+
+        private void ReleaseTileToPool(GameObject tile) {
+            if (tile == null) {
+                return;
+            }
+
+            if (!_tilePoolIndexes.TryGetValue(tile, out int prefabIndex)) {
+                Debug.LogWarning($"Tile '{tile.name}' was not created by the BoardView pool.");
+                return;
+            }
+
+            _tilePools[prefabIndex].Release(tile);
+        }
+
+        private GameObject CreatePooledTile(int prefabIndex) {
+            GameObject prefab = _tilePrefabRepository.TileTypePrefabList[prefabIndex];
+            GameObject tile = Instantiate(prefab, _tilePoolRoot, false);
+            tile.name = prefab.name;
+            tile.SetActive(false);
+            _tilePoolIndexes[tile] = prefabIndex;
+
+            return tile;
+        }
+
+        private void OnGetPooledTile(GameObject tile, int prefabIndex) {
+            GameObject prefab = _tilePrefabRepository.TileTypePrefabList[prefabIndex];
+            tile.name = prefab.name;
+
+            Transform tileTransform = tile.transform;
+            tileTransform.DOKill();
+            tileTransform.localScale = Vector3.one;
+            tileTransform.localRotation = Quaternion.identity;
+            tileTransform.localPosition = Vector3.zero;
+            tile.SetActive(true);
+        }
+
+        private void OnReleasePooledTile(GameObject tile) {
+            Transform tileTransform = tile.transform;
+            tileTransform.DOKill();
+            tileTransform.SetParent(_tilePoolRoot, false);
+            tileTransform.localScale = Vector3.one;
+            tileTransform.localRotation = Quaternion.identity;
+            tileTransform.localPosition = Vector3.zero;
+            tile.SetActive(false);
+        }
+
+        private void OnDestroyPooledTile(GameObject tile) {
+            _tilePoolIndexes.Remove(tile);
+            Destroy(tile);
         }
 
         #region Events
