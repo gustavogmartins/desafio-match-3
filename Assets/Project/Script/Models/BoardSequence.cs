@@ -7,7 +7,7 @@ namespace Gazeus.DesafioMatch3.Models
     {
         public List<MovedTileInfo> MovedTiles { get; set; }
         public List<AddedTileInfo> AddedTiles { get; set; }
-        public List<Vector2Int> MatchedPosition { get; set; }
+        public List<Vector2Int> RemovedPositions { get; set; }
         public List<MatchGroup> MatchGroups { get; set; }
     }
 }
