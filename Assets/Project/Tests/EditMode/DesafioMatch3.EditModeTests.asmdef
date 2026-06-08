@@ -1,0 +1,21 @@
+{
+    "name": "DesafioMatch3.EditModeTests",
+    "rootNamespace": "Gazeus.DesafioMatch3.Tests",
+    "references": [
+        "DesafioMatch3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
