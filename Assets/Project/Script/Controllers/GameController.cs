@@ -14,7 +14,7 @@ namespace Gazeus.DesafioMatch3.Controllers
         [SerializeField] private int _boardHeight = 10;
         [SerializeField] private int _boardWidth = 10;
         [SerializeField] private float _doubleClickInterval = 0.3f;
-
+        [SerializeField] private SceneFaderController _sceneFaderController;
         private GameService _gameService;
         private bool _isAnimating;
         private int _selectedX = -1;
@@ -39,6 +39,7 @@ namespace Gazeus.DesafioMatch3.Controllers
         {
             List<List<Tile>> board = _gameService.StartGame(_boardWidth, _boardHeight);
             _boardView.CreateBoard(board);
+            _sceneFaderController.StartFadeIn();
         }
         #endregion
 

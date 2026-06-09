@@ -1,7 +1,9 @@
 {
     "name": "DesafioMatch3",
     "rootNamespace": "Gazeus.DesafioMatch3",
-    "references": [],
+    "references": [
+        "GUID:2c7df4464738737409d6075113288fd1"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
