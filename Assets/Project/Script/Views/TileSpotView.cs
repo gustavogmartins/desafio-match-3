@@ -10,6 +10,8 @@ namespace Gazeus.DesafioMatch3.Views
         public event Action<int, int> Clicked;
 
         [SerializeField] private Button _button;
+        [SerializeField] private Color32[] _tileColors; 
+        [SerializeField] private Image _tileImage;
 
         private int _x;
         private int _y;
@@ -39,6 +41,10 @@ namespace Gazeus.DesafioMatch3.Views
         {
             tile.transform.SetParent(transform, false);
             tile.transform.position = transform.position;
+        }
+        
+        public void SetTileColor(int index) {
+            _tileImage.color = _tileColors[index];
         }
 
         private void OnTileClick()

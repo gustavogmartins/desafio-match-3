@@ -37,11 +37,9 @@ namespace Gazeus.DesafioMatch3.Views {
 
             _tiles = new GameObject[board.Count][];
             _tileSpots = new TileSpotView[board.Count][];
-
             for (int y = 0; y < board.Count; y++) {
                 _tiles[y] = new GameObject[board[0].Count];
                 _tileSpots[y] = new TileSpotView[board[0].Count];
-
                 for (int x = 0; x < board[0].Count; x++) {
                     TileSpotView tileSpot = Instantiate(_tileSpotPrefab, _boardContainer.transform, false);
                     tileSpot.SetPosition(x, y);
@@ -50,10 +48,12 @@ namespace Gazeus.DesafioMatch3.Views {
                     _tileSpots[y][x] = tileSpot;
 
                     int tileTypeIndex = board[y][x].Type;
+                    
                     if (tileTypeIndex > -1) {
                         GameObject tile = GetTileFromPool(tileTypeIndex);
                         tileSpot.SetTile(tile);
-
+                        int tileColorIndex = (x+y) % 2 == 0 ? 0 : 1;
+                        tileSpot.SetTileColor(tileColorIndex);
                         _tiles[y][x] = tile;
                     }
                 }
