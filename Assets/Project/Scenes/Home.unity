@@ -1839,7 +1839,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3e1af52fe3fd544ab83bfc0d05ea8fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DesafioMatch3::Gazeus.DesafioMatch3.SceneFaderController
-  _fadeDuration: 0.5
+  _fadeDuration: 0.25
   _canvasGroup: {fileID: 1978549736}
   _nextSceneName: Gameplay
 --- !u!1 &2050255315

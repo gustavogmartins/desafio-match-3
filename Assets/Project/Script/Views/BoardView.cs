@@ -9,23 +9,31 @@ using UnityEngine.UI;
 
 namespace Gazeus.DesafioMatch3.Views {
     public class BoardView : MonoBehaviour {
+        private const int DestroyTileVfxIndex = 0;
+
         public event Action<int, int> TileClicked;
         [SerializeField] private RectTransform _boardContainerRect;
         [SerializeField] private GridLayoutGroup _boardContainer;
         [SerializeField] private TilePrefabRepository _tilePrefabRepository;
+        [SerializeField] private VfxPrefabRepository _vfxPrefabRepository;
         [SerializeField] private TileSpotView _tileSpotPrefab;
 
         private GameObject[][] _tiles;
         private TileSpotView[][] _tileSpots;
         private ObjectPool<GameObject>[] _tilePools;
+        private ObjectPool<GameObject>[] _vfxPools;
         private readonly Dictionary<GameObject, int> _tilePoolIndexes = new();
+        private readonly Dictionary<GameObject, int> _vfxPoolIndexes = new();
+        private readonly Vector3[] _rectWorldCorners = new Vector3[4];
         private Transform _tilePoolRoot;
+        private Transform _vfxPoolRoot;
 
         public void CreateBoard(List<List<Tile>> board) {
             UpdateCellSize();
 
             _boardContainer.constraintCount = board[0].Count;
             InitializeTilePools(board.Count * board[0].Count);
+            InitializeVfxPools(board.Count * board[0].Count);
 
             _tiles = new GameObject[board.Count][];
             _tileSpots = new TileSpotView[board.Count][];
@@ -97,7 +105,13 @@ namespace Gazeus.DesafioMatch3.Views {
         public Tween DestroyTiles(List<Vector2Int> matchedPosition) {
             for (int i = 0; i < matchedPosition.Count; i++) {
                 Vector2Int position = matchedPosition[i];
-                ReleaseTileToPool(_tiles[position.y][position.x]);
+                GameObject tile = _tiles[position.y][position.x];
+
+                if (tile != null) {
+                    PlayVfx(DestroyTileVfxIndex, GetTransformWorldCenter(tile.transform));
+                    ReleaseTileToPool(tile);
+                }
+
                 _tiles[position.y][position.x] = null;
             }
 
@@ -164,6 +178,10 @@ namespace Gazeus.DesafioMatch3.Views {
                 _tiles[position.y][position.x] = specialTileObject;
 
                 specialTileObject.transform.localScale = Vector2.zero;
+                if (specialTile.SpecialType == TileSpecialType.ClearHorizontal) {
+                    specialTileObject.transform.localRotation = Quaternion.Euler(0, 0, -90);
+                }
+                
                 sequence.Join(specialTileObject.transform.DOScale(1f, 0.15f));
             }
 
@@ -203,6 +221,38 @@ namespace Gazeus.DesafioMatch3.Views {
             }
         }
 
+        private void InitializeVfxPools(int boardTileCount) {
+            if (_vfxPools != null || _vfxPrefabRepository == null) {
+                return;
+            }
+
+            GameObject[] vfxPrefabs = _vfxPrefabRepository.VfxPrefabList;
+            if (vfxPrefabs == null || vfxPrefabs.Length == 0) {
+                return;
+            }
+
+            EnsureVfxPoolRoot();
+
+            int poolSize = Mathf.Max(1, boardTileCount);
+            _vfxPools = new ObjectPool<GameObject>[vfxPrefabs.Length];
+
+            for (int i = 0; i < vfxPrefabs.Length; i++) {
+                int prefabIndex = i;
+                if (vfxPrefabs[prefabIndex] == null) {
+                    continue;
+                }
+
+                _vfxPools[prefabIndex] = new ObjectPool<GameObject>(
+                    createFunc: () => CreatePooledVfx(prefabIndex),
+                    actionOnGet: vfx => OnGetPooledVfx(vfx, prefabIndex),
+                    actionOnRelease: OnReleasePooledVfx,
+                    actionOnDestroy: OnDestroyPooledVfx,
+                    collectionCheck: true,
+                    defaultCapacity: poolSize,
+                    maxSize: poolSize);
+            }
+        }
+
         private void EnsureTilePoolRoot() {
             if (_tilePoolRoot != null) {
                 return;
@@ -213,6 +263,15 @@ namespace Gazeus.DesafioMatch3.Views {
             Transform poolParent = boardContainerTransform.parent;
             poolRoot.transform.SetParent(poolParent, false);
             _tilePoolRoot = poolRoot.transform;
+        }
+
+        private void EnsureVfxPoolRoot() {
+            if (_vfxPoolRoot != null) {
+                return;
+            }
+
+            GameObject poolRoot = new("VFXPoolRoot");
+            _vfxPoolRoot = poolRoot.transform;
         }
 
         private GameObject GetTileFromPool(int prefabIndex) {
@@ -236,6 +295,43 @@ namespace Gazeus.DesafioMatch3.Views {
             _tilePools[prefabIndex].Release(tile);
         }
 
+        private void PlayVfx(int prefabIndex, Vector3 worldPosition) {
+            if (_vfxPools == null || prefabIndex < 0 || prefabIndex >= _vfxPools.Length) {
+                return;
+            }
+
+            ObjectPool<GameObject> vfxPool = _vfxPools[prefabIndex];
+            if (vfxPool == null) {
+                return;
+            }
+
+            GameObject vfx = vfxPool.Get();
+            PooledParticleVfx pooledParticleVfx = vfx.GetComponent<PooledParticleVfx>();
+            if (pooledParticleVfx == null) {
+                ReleaseVfxToPool(vfx);
+                return;
+            }
+
+            pooledParticleVfx.PlayAt(worldPosition);
+        }
+
+        private void ReleaseVfxToPool(GameObject vfx) {
+            if (vfx == null) {
+                return;
+            }
+
+            if (!_vfxPoolIndexes.TryGetValue(vfx, out int prefabIndex)) {
+                Debug.LogWarning($"VFX '{vfx.name}' was not created by the BoardView pool.");
+                return;
+            }
+
+            if (_vfxPools == null || prefabIndex < 0 || prefabIndex >= _vfxPools.Length || _vfxPools[prefabIndex] == null) {
+                return;
+            }
+
+            _vfxPools[prefabIndex].Release(vfx);
+        }
+
         private GameObject CreatePooledTile(int prefabIndex) {
             GameObject prefab = _tilePrefabRepository.TileTypePrefabList[prefabIndex];
             GameObject tile = Instantiate(prefab, _tilePoolRoot, false);
@@ -244,6 +340,23 @@ namespace Gazeus.DesafioMatch3.Views {
             _tilePoolIndexes[tile] = prefabIndex;
 
             return tile;
+        }
+
+        private GameObject CreatePooledVfx(int prefabIndex) {
+            GameObject prefab = _vfxPrefabRepository.VfxPrefabList[prefabIndex];
+            GameObject vfx = Instantiate(prefab, _vfxPoolRoot, false);
+            vfx.name = prefab.name;
+
+            PooledParticleVfx pooledParticleVfx = vfx.GetComponent<PooledParticleVfx>();
+            if (pooledParticleVfx == null) {
+                pooledParticleVfx = vfx.AddComponent<PooledParticleVfx>();
+            }
+
+            pooledParticleVfx.Initialize(ReleaseVfxToPool);
+            vfx.SetActive(false);
+            _vfxPoolIndexes[vfx] = prefabIndex;
+
+            return vfx;
         }
 
         private void OnGetPooledTile(GameObject tile, int prefabIndex) {
@@ -258,6 +371,17 @@ namespace Gazeus.DesafioMatch3.Views {
             tile.SetActive(true);
         }
 
+        private void OnGetPooledVfx(GameObject vfx, int prefabIndex) {
+            GameObject prefab = _vfxPrefabRepository.VfxPrefabList[prefabIndex];
+            vfx.name = prefab.name;
+
+            Transform vfxTransform = vfx.transform;
+            vfxTransform.SetParent(_vfxPoolRoot, false);
+            vfxTransform.localScale = Vector3.one;
+            vfxTransform.localRotation = Quaternion.identity;
+            vfxTransform.localPosition = Vector3.zero;
+        }
+
         private void OnReleasePooledTile(GameObject tile) {
             Transform tileTransform = tile.transform;
             tileTransform.DOKill();
@@ -268,9 +392,37 @@ namespace Gazeus.DesafioMatch3.Views {
             tile.SetActive(false);
         }
 
+        private void OnReleasePooledVfx(GameObject vfx) {
+            PooledParticleVfx pooledParticleVfx = vfx.GetComponent<PooledParticleVfx>();
+            if (pooledParticleVfx != null) {
+                pooledParticleVfx.StopAndClear();
+            }
+
+            Transform vfxTransform = vfx.transform;
+            vfxTransform.SetParent(_vfxPoolRoot, false);
+            vfxTransform.localScale = Vector3.one;
+            vfxTransform.localRotation = Quaternion.identity;
+            vfxTransform.localPosition = Vector3.zero;
+            vfx.SetActive(false);
+        }
+
         private void OnDestroyPooledTile(GameObject tile) {
             _tilePoolIndexes.Remove(tile);
             Destroy(tile);
+        }
+
+        private void OnDestroyPooledVfx(GameObject vfx) {
+            _vfxPoolIndexes.Remove(vfx);
+            Destroy(vfx);
+        }
+
+        private Vector3 GetTransformWorldCenter(Transform target) {
+            if (target is not RectTransform rectTransform) {
+                return target.position;
+            }
+
+            rectTransform.GetWorldCorners(_rectWorldCorners);
+            return (_rectWorldCorners[0] + _rectWorldCorners[2]) * 0.5f;
         }
 
         #region Events
