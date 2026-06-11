@@ -17,6 +17,7 @@ namespace Gazeus.DesafioMatch3.Views {
         [SerializeField] private TilePrefabRepository _tilePrefabRepository;
         [SerializeField] private VfxPrefabRepository _vfxPrefabRepository;
         [SerializeField] private TileSpotView _tileSpotPrefab;
+        [SerializeField] private float _dissolveDuration = 0.25f;
 
         private GameObject[][] _tiles;
         private TileSpotView[][] _tileSpots;
@@ -103,19 +104,38 @@ namespace Gazeus.DesafioMatch3.Views {
         }
 
         public Tween DestroyTiles(List<Vector2Int> matchedPosition) {
+            Sequence sequence = DOTween.Sequence();
+            bool hasDissolveTween = false;
+
             for (int i = 0; i < matchedPosition.Count; i++) {
                 Vector2Int position = matchedPosition[i];
                 GameObject tile = _tiles[position.y][position.x];
 
                 if (tile != null) {
-                    PlayVfx(DestroyTileVfxIndex, GetTransformWorldCenter(tile.transform));
-                    ReleaseTileToPool(tile);
+                    Vector3 vfxPosition = GetTransformWorldCenter(tile.transform);
+                    TileDissolveView dissolveView = EnsureTileDissolveView(tile);
+                    Tween dissolveTween = dissolveView.PlayDissolve(_dissolveDuration);
+
+                    if (dissolveTween != null) {
+                        hasDissolveTween = true;
+                        sequence.Join(dissolveTween.OnComplete(() => {
+                            PlayVfx(DestroyTileVfxIndex, vfxPosition);
+                            ReleaseTileToPool(tile);
+                        }));
+                    } else {
+                        PlayVfx(DestroyTileVfxIndex, vfxPosition);
+                        ReleaseTileToPool(tile);
+                    }
                 }
 
                 _tiles[position.y][position.x] = null;
             }
 
-            return DOVirtual.DelayedCall(0.2f, () => { });
+            if (!hasDissolveTween) {
+                sequence.AppendInterval(_dissolveDuration);
+            }
+
+            return sequence;
         }
 
         public Tween MoveTiles(List<MovedTileInfo> movedTiles) {
@@ -336,6 +356,7 @@ namespace Gazeus.DesafioMatch3.Views {
             GameObject prefab = _tilePrefabRepository.TileTypePrefabList[prefabIndex];
             GameObject tile = Instantiate(prefab, _tilePoolRoot, false);
             tile.name = prefab.name;
+            EnsureTileDissolveView(tile).ResetDissolve();
             tile.SetActive(false);
             _tilePoolIndexes[tile] = prefabIndex;
 
@@ -368,6 +389,7 @@ namespace Gazeus.DesafioMatch3.Views {
             tileTransform.localScale = Vector3.one;
             tileTransform.localRotation = Quaternion.identity;
             tileTransform.localPosition = Vector3.zero;
+            EnsureTileDissolveView(tile).ResetDissolve();
             tile.SetActive(true);
         }
 
@@ -389,6 +411,7 @@ namespace Gazeus.DesafioMatch3.Views {
             tileTransform.localScale = Vector3.one;
             tileTransform.localRotation = Quaternion.identity;
             tileTransform.localPosition = Vector3.zero;
+            EnsureTileDissolveView(tile).ResetDissolve();
             tile.SetActive(false);
         }
 
@@ -423,6 +446,20 @@ namespace Gazeus.DesafioMatch3.Views {
 
             rectTransform.GetWorldCorners(_rectWorldCorners);
             return (_rectWorldCorners[0] + _rectWorldCorners[2]) * 0.5f;
+        }
+
+        private static TileDissolveView EnsureTileDissolveView(GameObject tile) {
+            TileDissolveView dissolveView = tile.GetComponent<TileDissolveView>();
+            if (dissolveView != null) {
+                return dissolveView;
+            }
+
+            dissolveView = tile.GetComponentInChildren<TileDissolveView>(true);
+            if (dissolveView != null) {
+                return dissolveView;
+            }
+
+            return tile.AddComponent<TileDissolveView>();
         }
 
         #region Events
