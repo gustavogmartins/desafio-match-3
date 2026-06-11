@@ -17,7 +17,7 @@ namespace Gazeus.DesafioMatch3.Views {
         [SerializeField] private TilePrefabRepository _tilePrefabRepository;
         [SerializeField] private VfxPrefabRepository _vfxPrefabRepository;
         [SerializeField] private TileSpotView _tileSpotPrefab;
-        [SerializeField] private float _dissolveDuration = 0.25f;
+        [SerializeField] private float _dissolveDuration = 0.5f;
 
         private GameObject[][] _tiles;
         private TileSpotView[][] _tileSpots;
@@ -30,9 +30,9 @@ namespace Gazeus.DesafioMatch3.Views {
         private Transform _vfxPoolRoot;
 
         public void CreateBoard(List<List<Tile>> board) {
-            UpdateCellSize();
-
             _boardContainer.constraintCount = board[0].Count;
+            UpdateCellSize();
+            
             InitializeTilePools(board.Count * board[0].Count);
             InitializeVfxPools(board.Count * board[0].Count);
 
