@@ -10,6 +10,7 @@ using UnityEngine.UI;
 namespace Gazeus.DesafioMatch3.Views {
     public class BoardView : MonoBehaviour {
         private const int DestroyTileVfxIndex = 0;
+        private const int SpecialTileAppearVfxIndex = 1;
 
         public event Action<int, int> TileClicked;
         [SerializeField] private RectTransform _boardContainerRect;
@@ -197,12 +198,37 @@ namespace Gazeus.DesafioMatch3.Views {
                 tileSpot.SetTile(specialTileObject);
                 _tiles[position.y][position.x] = specialTileObject;
 
-                specialTileObject.transform.localScale = Vector2.zero;
+                specialTileObject.transform.localScale = Vector3.zero;
+                specialTileObject.transform.rotation = Quaternion.identity;
+                
                 if (specialTile.SpecialType == TileSpecialType.ClearHorizontal) {
                     specialTileObject.transform.localRotation = Quaternion.Euler(0, 0, -90);
                 }
                 
-                sequence.Join(specialTileObject.transform.DOScale(1f, 0.15f));
+                Vector3 vfxPosition = GetTransformWorldCenter(specialTileObject.transform);
+                PlayVfx(SpecialTileAppearVfxIndex, vfxPosition);
+                specialTileObject.AddComponent<Canvas>().overrideSorting = true;
+                Canvas specialTileCanvas = specialTileObject.GetComponent<Canvas>();
+                specialTileCanvas.sortingOrder = 10;
+                
+                sequence.Append(
+                    specialTileObject.transform
+                        .DOScale(2.35f, 0.18f)
+                        .SetEase(Ease.OutBack)
+                );
+
+                sequence.Append(
+                    specialTileObject.transform
+                        .DOScale(1f, 0.08f)
+                        .SetEase(Ease.InOutSine)
+                );
+
+                sequence.Join(
+                    specialTileObject.transform
+                        .DOPunchRotation(new Vector3(0f, 0f, 24f), 0.25f, 8, 0.5f)
+                );
+
+                sequence.onComplete += () => Destroy(specialTileCanvas);
             }
 
             return sequence;
