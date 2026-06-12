@@ -29,11 +29,10 @@ namespace Gazeus.DesafioMatch3.Views
         public Tween AnimatedSetTile(GameObject tile)
         {
             Transform tileTransform = tile.transform;
-            Sequence sequence = DOTween.Sequence();
-            sequence.AppendCallback(() => tileTransform.SetParent(transform, true));
-            sequence.Append(tileTransform.DOMove(transform.position, 0.3f));
+            tileTransform.DOKill();
+            tileTransform.SetParent(transform, true);
 
-            return sequence;
+            return tileTransform.DOMove(transform.position, 0.3f);
         }
 
         public void SetSelected(bool selected) {

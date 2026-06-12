@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using Gazeus.DesafioMatch3.Core;
@@ -45,34 +46,22 @@ namespace Gazeus.DesafioMatch3.Controllers
 
         private void AnimateBoard(List<BoardSequence> boardSequences, Action onComplete)
         {
-            if (boardSequences.Count == 0)
-            {
-                onComplete();
-                return;
-            }
-
-            AnimateBoard(boardSequences, 0, onComplete);
+            StartCoroutine(AnimateBoardRoutine(boardSequences, onComplete));
         }
-
-        private void AnimateBoard(List<BoardSequence> boardSequences, int index, Action onComplete)
+        
+        private IEnumerator AnimateBoardRoutine(List<BoardSequence> boardSequences, Action onComplete)
         {
-            BoardSequence boardSequence = boardSequences[index];
-
-            Sequence sequence = DOTween.Sequence();
-            sequence.Append(_boardView.DestroyTiles(boardSequence.RemovedPositions));
-            sequence.Append(_boardView.MarkSpecialTiles(boardSequence.CreatedSpecialTiles));
-            sequence.Append(_boardView.MoveTiles(boardSequence.MovedTiles));
-            sequence.Append(_boardView.CreateTile(boardSequence.AddedTiles));
-
-            index += 1;
-            if (index < boardSequences.Count)
+            for (int i = 0; i < boardSequences.Count; i++)
             {
-                sequence.onComplete += () => AnimateBoard(boardSequences, index, onComplete);
+                BoardSequence boardSequence = boardSequences[i];
+
+                yield return _boardView.DestroyTiles(boardSequence.RemovedPositions).WaitForCompletion();
+                yield return _boardView.MarkSpecialTiles(boardSequence.CreatedSpecialTiles).WaitForCompletion();
+                yield return _boardView.MoveTiles(boardSequence.MovedTiles).WaitForCompletion();
+                yield return _boardView.CreateTile(boardSequence.AddedTiles).WaitForCompletion();
             }
-            else
-            {
-                sequence.onComplete += () => onComplete();
-            }
+
+            onComplete?.Invoke();
         }
 
         private void OnTileClick(int x, int y)
