@@ -6,7 +6,7 @@ SpriteAtlas:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Gameplay_ElementsAtlas
+  m_Name: UI_ElementsAtlas
   m_EditorData:
     serializedVersion: 2
     textureSettings:
@@ -23,7 +23,7 @@ SpriteAtlas:
     platformSettings:
     - serializedVersion: 4
       m_BuildTarget: DefaultTexturePlatform
-      m_MaxTextureSize: 256
+      m_MaxTextureSize: 512
       m_ResizeAlgorithm: 0
       m_TextureFormat: -1
       m_TextureCompression: 1
@@ -40,37 +40,43 @@ SpriteAtlas:
       blockOffset: 1
       allowAlphaSplitting: 0
       enableRotation: 0
-      enableTightPacking: 0
+      enableTightPacking: 1
       enableAlphaDilation: 1
     secondaryTextureSettings: {}
     variantMultiplier: 1
     packables:
-    - {fileID: 102900000, guid: 39f6e347a5b4c7d448cbb1a5c9d2fa9e, type: 3}
+    - {fileID: 102900000, guid: 7f6cd653570a2934094425b67a036c3e, type: 3}
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
     packedSpriteRenderDataKeys:
-    - 1e8912907492f75468a84ec159e8304b: 21300000
-    - e278b5d1583584e46bed0c49b43592d1: 21300000
-    - fd277b27a8cd5a64d84c0d453c0b8ca7: 21300000
-    - 36cb7478cee658746a2351db8379aa78: 21300000
-    - 13ff6c4f7c6de3f4ba4a613487ea517a: 21300000
-    - 4b8c11cf04c63574a9023c1933b94ede: 21300000
+    - cd46a5909125b8a4c8f7e63ee416a1bb: 21300000
+    - 0c2bf7f1a30f3544193ccd6fead0c5b2: 21300000
+    - bd2057b444cf8a64c98d24e5b87ffe44: 21300000
+    - 1af777d5b1905f44398a88c49b7f7d24: 21300000
+    - 4d2a15b783a753a45b680599e5a69343: 21300000
+    - 3f752758f10c9a945a0670a4a70d2fb3: 21300000
+    - 478d45881be546e49b151021bf7e991a: 21300000
+    - 55f8edbda53c792469a13ee9ae04e223: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
-  - {fileID: 21300000, guid: 1e8912907492f75468a84ec159e8304b, type: 3}
-  - {fileID: 21300000, guid: e278b5d1583584e46bed0c49b43592d1, type: 3}
-  - {fileID: 21300000, guid: fd277b27a8cd5a64d84c0d453c0b8ca7, type: 3}
-  - {fileID: 21300000, guid: 36cb7478cee658746a2351db8379aa78, type: 3}
-  - {fileID: 21300000, guid: 13ff6c4f7c6de3f4ba4a613487ea517a, type: 3}
-  - {fileID: 21300000, guid: 4b8c11cf04c63574a9023c1933b94ede, type: 3}
+  - {fileID: 21300000, guid: cd46a5909125b8a4c8f7e63ee416a1bb, type: 3}
+  - {fileID: 21300000, guid: 0c2bf7f1a30f3544193ccd6fead0c5b2, type: 3}
+  - {fileID: 21300000, guid: bd2057b444cf8a64c98d24e5b87ffe44, type: 3}
+  - {fileID: 21300000, guid: 1af777d5b1905f44398a88c49b7f7d24, type: 3}
+  - {fileID: 21300000, guid: 4d2a15b783a753a45b680599e5a69343, type: 3}
+  - {fileID: 21300000, guid: 3f752758f10c9a945a0670a4a70d2fb3, type: 3}
+  - {fileID: 21300000, guid: 478d45881be546e49b151021bf7e991a, type: 3}
+  - {fileID: 21300000, guid: 55f8edbda53c792469a13ee9ae04e223, type: 3}
   m_PackedSpriteNamesToIndex:
-  - Icon_Bomb_Bomb
-  - Icon_Gem01_Blue
-  - Icon_Gem02_Hexagon_Green
-  - Icon_Sword
-  - Icon_Gem04_Octagon_Red
-  - Icon_Gem03_Diamond_Purple
+  - Icon_Energy_Green
+  - Slider_Level01_Badge_Yellow
+  - Button_Hexagon199_White_Bg
+  - Slider_Basic02_Fill_White
+  - ResourceBar_Btn_Single_Green
+  - Slider_Basic02_Fill_Yellow
+  - Icon_Energy_Yellow
+  - Icon_PictoIcon_Play
   m_RenderDataMap: {}
-  m_Tag: Gameplay_ElementsAtlas
+  m_Tag: UI_ElementsAtlas
   m_IsVariant: 0
