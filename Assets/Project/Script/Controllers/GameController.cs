@@ -92,6 +92,7 @@ namespace Gazeus.DesafioMatch3.Controllers
                 if (_selectedX == x && _selectedY == y)  {
                     _selectedX = -1;
                     _selectedY = -1;
+                    _boardView.ClearSelectedTile();
                     return;
                 }
                 
@@ -121,6 +122,7 @@ namespace Gazeus.DesafioMatch3.Controllers
                         }
                         _selectedX = -1;
                         _selectedY = -1;
+                        _boardView.ClearSelectedTile();
                     };
                 }
             }
@@ -128,6 +130,7 @@ namespace Gazeus.DesafioMatch3.Controllers
             {
                 _selectedX = x;
                 _selectedY = y;
+                _boardView.SelectTile(x, y);
             }
         }
 
@@ -144,6 +147,8 @@ namespace Gazeus.DesafioMatch3.Controllers
             _isAnimating = true;
             _selectedX = -1;
             _selectedY = -1;
+            _boardView.ClearSelectedTile();
+            
             _lastClickedX = -1;
             _lastClickedY = -1;
             _lastClickTime = -1f;

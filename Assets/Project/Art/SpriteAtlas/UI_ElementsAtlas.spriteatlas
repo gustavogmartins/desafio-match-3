@@ -51,6 +51,7 @@ SpriteAtlas:
     cachedData: {fileID: 0}
     packedSpriteRenderDataKeys:
     - cd46a5909125b8a4c8f7e63ee416a1bb: 21300000
+    - ae97dca174a35294f85d35d368e69d31: 21300000
     - 0c2bf7f1a30f3544193ccd6fead0c5b2: 21300000
     - bd2057b444cf8a64c98d24e5b87ffe44: 21300000
     - 1af777d5b1905f44398a88c49b7f7d24: 21300000
@@ -61,6 +62,7 @@ SpriteAtlas:
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: cd46a5909125b8a4c8f7e63ee416a1bb, type: 3}
+  - {fileID: 21300000, guid: ae97dca174a35294f85d35d368e69d31, type: 3}
   - {fileID: 21300000, guid: 0c2bf7f1a30f3544193ccd6fead0c5b2, type: 3}
   - {fileID: 21300000, guid: bd2057b444cf8a64c98d24e5b87ffe44, type: 3}
   - {fileID: 21300000, guid: 1af777d5b1905f44398a88c49b7f7d24, type: 3}
@@ -70,6 +72,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 55f8edbda53c792469a13ee9ae04e223, type: 3}
   m_PackedSpriteNamesToIndex:
   - Icon_Energy_Green
+  - SelectionHighlight
   - Slider_Level01_Badge_Yellow
   - Button_Hexagon199_White_Bg
   - Slider_Basic02_Fill_White

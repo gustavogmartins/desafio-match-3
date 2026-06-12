@@ -30,6 +30,9 @@ namespace Gazeus.DesafioMatch3.Views {
         private readonly Vector3[] _rectWorldCorners = new Vector3[4];
         private Transform _tilePoolRoot;
         private Transform _vfxPoolRoot;
+        
+        private int _selectedTileX = -1;
+        private int _selectedTileY = -1;
 
         public void CreateBoard(List<List<Tile>> board) {
             _boardContainer.constraintCount = board[0].Count;
@@ -60,6 +63,33 @@ namespace Gazeus.DesafioMatch3.Views {
                     }
                 }
             }
+        }
+
+        public void SelectTile(int x, int y) {
+            ClearSelectedTile();
+
+            if (!IsValidTileSpotPosition(x, y)) return;
+
+            _selectedTileX = x;
+            _selectedTileY = y;
+            _tileSpots[y][x].SetSelected(true);
+        }
+
+        public void ClearSelectedTile() {
+            if (IsValidTileSpotPosition(_selectedTileX, _selectedTileY)) {
+                _tileSpots[_selectedTileY][_selectedTileX].SetSelected(false);
+            }
+
+            _selectedTileX = -1;
+            _selectedTileY = -1;
+        }
+
+        private bool IsValidTileSpotPosition(int x, int y) {
+            return _tileSpots != null &&
+                   y >= 0 &&
+                   y < _tileSpots.Length &&
+                   x >= 0 &&
+                   x < _tileSpots[y].Length;
         }
 
         private void UpdateCellSize() {
@@ -526,7 +556,7 @@ namespace Gazeus.DesafioMatch3.Views {
         #region Events
 
         private void TileSpot_Clicked(int x, int y) {
-            TileClicked(x, y);
+            TileClicked?.Invoke(x, y);
         }
 
         #endregion
