@@ -14,11 +14,11 @@ namespace Gazeus.DesafioMatch3.Views {
 
         public event Action<int, int> TileClicked;
         [SerializeField] private RectTransform _boardContainerRect;
-        [SerializeField] private RectTransform _specialTileAnimationLayer;
         [SerializeField] private GridLayoutGroup _boardContainer;
         [SerializeField] private TilePrefabRepository _tilePrefabRepository;
         [SerializeField] private VfxPrefabRepository _vfxPrefabRepository;
         [SerializeField] private TileSpotView _tileSpotPrefab;
+        [SerializeField] private SpecialTileSpotView _specialTileSpot;
         [SerializeField] private float _dissolveDuration = 0.5f;
 
         private GameObject[][] _tiles;
@@ -34,7 +34,7 @@ namespace Gazeus.DesafioMatch3.Views {
         public void CreateBoard(List<List<Tile>> board) {
             _boardContainer.constraintCount = board[0].Count;
             UpdateCellSize();
-            
+
             InitializeTilePools(board.Count * board[0].Count);
             InitializeVfxPools(board.Count * board[0].Count);
 
@@ -50,11 +50,11 @@ namespace Gazeus.DesafioMatch3.Views {
 
                     _tileSpots[y][x] = tileSpot;
                     int tileTypeIndex = board[y][x].Type;
-                    
+
                     if (tileTypeIndex > -1) {
                         GameObject tile = GetTileFromPool(tileTypeIndex);
                         tileSpot.SetTile(tile);
-                        int tileColorIndex = (x+y) % 2 == 0 ? 0 : 1;
+                        int tileColorIndex = (x + y) % 2 == 0 ? 0 : 1;
                         tileSpot.SetTileColor(tileColorIndex);
                         _tiles[y][x] = tile;
                     }
@@ -82,6 +82,7 @@ namespace Gazeus.DesafioMatch3.Views {
             float finalCellSize = Mathf.Min(cellSizeByWidth, cellSizeByHeight);
 
             _boardContainer.cellSize = new Vector2(finalCellSize, finalCellSize);
+            _specialTileSpot.SetSpecialTile(_boardContainer);
         }
 
         public Tween CreateTile(List<AddedTileInfo> addedTiles) {
@@ -225,6 +226,8 @@ namespace Gazeus.DesafioMatch3.Views {
         private Tween CreateSpecialTileAnimation(GameObject specialTileObject, TileSpotView tileSpot,
             TileSpecialType specialType) {
             Transform specialTileTransform = specialTileObject.transform;
+            specialTileTransform.SetParent(_specialTileSpot.transform, true);
+
             Sequence sequence = DOTween.Sequence();
             sequence.Append(
                 specialTileTransform
@@ -402,7 +405,8 @@ namespace Gazeus.DesafioMatch3.Views {
                 return;
             }
 
-            if (_vfxPools == null || prefabIndex < 0 || prefabIndex >= _vfxPools.Length || _vfxPools[prefabIndex] == null) {
+            if (_vfxPools == null || prefabIndex < 0 || prefabIndex >= _vfxPools.Length ||
+                _vfxPools[prefabIndex] == null) {
                 return;
             }
 
@@ -529,10 +533,6 @@ namespace Gazeus.DesafioMatch3.Views {
 
         private void OnRectTransformDimensionsChange() {
             UpdateCellSize();
-        }
-
-        private void UpdateTilesToParentPosition() {
-            
         }
     }
 }

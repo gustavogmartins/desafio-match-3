@@ -4861,7 +4861,7 @@ ParticleSystemRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -4903,6 +4903,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8049980759985905521}
+  - component: {fileID: 3961277350931729677}
   m_Layer: 0
   m_Name: SpecialTileVFX
   m_TagString: Untagged
@@ -4928,6 +4929,18 @@ Transform:
   - {fileID: 6433002951034821158}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3961277350931729677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 634935065243943409}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d606fa7e8da58646a501a18109aa4a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DesafioMatch3::Gazeus.DesafioMatch3.Views.PooledParticleVfx
 --- !u!1 &3846928452320649074
 GameObject:
   m_ObjectHideFlags: 0
@@ -9789,7 +9802,7 @@ ParticleSystemRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -14683,7 +14696,7 @@ ParticleSystemRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
