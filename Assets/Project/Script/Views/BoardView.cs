@@ -14,6 +14,7 @@ namespace Gazeus.DesafioMatch3.Views {
 
         public event Action<int, int> TileClicked;
         [SerializeField] private RectTransform _boardContainerRect;
+        [SerializeField] private RectTransform _specialTileAnimationLayer;
         [SerializeField] private GridLayoutGroup _boardContainer;
         [SerializeField] private TilePrefabRepository _tilePrefabRepository;
         [SerializeField] private VfxPrefabRepository _vfxPrefabRepository;
@@ -48,7 +49,6 @@ namespace Gazeus.DesafioMatch3.Views {
                     tileSpot.Clicked += TileSpot_Clicked;
 
                     _tileSpots[y][x] = tileSpot;
-
                     int tileTypeIndex = board[y][x].Type;
                     
                     if (tileTypeIndex > -1) {
@@ -148,16 +148,29 @@ namespace Gazeus.DesafioMatch3.Views {
                 }
             }
 
+            HashSet<Vector2Int> destinationPositions = new();
+            for (int i = 0; i < movedTiles.Count; i++) {
+                destinationPositions.Add(movedTiles[i].To);
+            }
+
             Sequence sequence = DOTween.Sequence();
             for (int i = 0; i < movedTiles.Count; i++) {
                 MovedTileInfo movedTileInfo = movedTiles[i];
 
                 Vector2Int from = movedTileInfo.From;
                 Vector2Int to = movedTileInfo.To;
+                GameObject movedTile = _tiles[from.y][from.x];
 
-                sequence.Join(_tileSpots[to.y][to.x].AnimatedSetTile(_tiles[from.y][from.x]));
+                sequence.Join(_tileSpots[to.y][to.x].AnimatedSetTile(movedTile));
 
-                tiles[to.y][to.x] = _tiles[from.y][from.x];
+                tiles[to.y][to.x] = movedTile;
+            }
+
+            for (int i = 0; i < movedTiles.Count; i++) {
+                Vector2Int from = movedTiles[i].From;
+                if (!destinationPositions.Contains(from)) {
+                    tiles[from.y][from.x] = null;
+                }
             }
 
             _tiles = tiles;
@@ -199,39 +212,57 @@ namespace Gazeus.DesafioMatch3.Views {
                 _tiles[position.y][position.x] = specialTileObject;
 
                 specialTileObject.transform.localScale = Vector3.zero;
-                specialTileObject.transform.rotation = Quaternion.identity;
-                
-                if (specialTile.SpecialType == TileSpecialType.ClearHorizontal) {
-                    specialTileObject.transform.localRotation = Quaternion.Euler(0, 0, -90);
-                }
-                
+                specialTileObject.transform.localRotation = GetSpecialTileRotation(specialTile.SpecialType);
+
                 Vector3 vfxPosition = GetTransformWorldCenter(specialTileObject.transform);
                 PlayVfx(SpecialTileAppearVfxIndex, vfxPosition);
-                specialTileObject.AddComponent<Canvas>().overrideSorting = true;
-                Canvas specialTileCanvas = specialTileObject.GetComponent<Canvas>();
-                specialTileCanvas.sortingOrder = 10;
-                
-                sequence.Append(
-                    specialTileObject.transform
-                        .DOScale(2.35f, 0.18f)
-                        .SetEase(Ease.OutBack)
-                );
-
-                sequence.Append(
-                    specialTileObject.transform
-                        .DOScale(1f, 0.08f)
-                        .SetEase(Ease.InOutSine)
-                );
-
-                sequence.Join(
-                    specialTileObject.transform
-                        .DOPunchRotation(new Vector3(0f, 0f, 24f), 0.25f, 8, 0.5f)
-                );
-
-                sequence.onComplete += () => Destroy(specialTileCanvas);
+                sequence.Append(CreateSpecialTileAnimation(specialTileObject, tileSpot, specialTile.SpecialType));
             }
 
             return sequence;
+        }
+
+        private Tween CreateSpecialTileAnimation(GameObject specialTileObject, TileSpotView tileSpot,
+            TileSpecialType specialType) {
+            Transform specialTileTransform = specialTileObject.transform;
+            Sequence sequence = DOTween.Sequence();
+            sequence.Append(
+                specialTileTransform
+                    .DOScale(2.35f, 0.18f)
+                    .SetEase(Ease.OutBack)
+            );
+
+            sequence.Append(
+                specialTileTransform
+                    .DOScale(1f, 0.08f)
+                    .SetEase(Ease.InOutSine)
+            );
+
+            sequence.Join(
+                specialTileTransform
+                    .DOPunchRotation(new Vector3(0f, 0f, 24f), 0.25f, 8, 0.5f)
+            );
+
+            sequence.AppendCallback(() => RestoreSpecialTileToSpot(
+                specialTileObject,
+                tileSpot,
+                specialType));
+
+            return sequence;
+        }
+
+        private static void RestoreSpecialTileToSpot(GameObject specialTileObject, TileSpotView tileSpot,
+            TileSpecialType specialType) {
+            Transform specialTileTransform = specialTileObject.transform;
+            tileSpot.SetTile(specialTileObject);
+            specialTileTransform.localScale = Vector3.one;
+            specialTileTransform.localRotation = GetSpecialTileRotation(specialType);
+        }
+
+        private static Quaternion GetSpecialTileRotation(TileSpecialType specialType) {
+            return specialType == TileSpecialType.ClearHorizontal
+                ? Quaternion.Euler(0f, 0f, -90f)
+                : Quaternion.identity;
         }
 
         private static int GetSpecialTilePrefabIndex(TileSpecialType specialType) {
@@ -498,6 +529,10 @@ namespace Gazeus.DesafioMatch3.Views {
 
         private void OnRectTransformDimensionsChange() {
             UpdateCellSize();
+        }
+
+        private void UpdateTilesToParentPosition() {
+            
         }
     }
 }
