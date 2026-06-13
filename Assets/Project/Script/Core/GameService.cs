@@ -28,6 +28,42 @@ namespace Gazeus.DesafioMatch3.Core {
             return IsSpecialTileOnBoard(_boardTiles, new Vector2Int(x, y));
         }
 
+        public bool TryCreateSpecialTile(
+            int x,
+            int y,
+            TileSpecialType specialType,
+            out CreatedSpecialTileInfo createdTile) {
+            createdTile = default;
+
+            if (specialType == TileSpecialType.None) {
+                return false;
+            }
+
+            Vector2Int position = new(x, y);
+            if (!IsValidPosition(_boardTiles, position)) {
+                return false;
+            }
+
+            Tile currentTile = _boardTiles[y][x];
+            if (currentTile.Type == EmptyTileType) {
+                return false;
+            }
+
+            SpecialTileCreationInfo specialTile = new() {
+                Type = currentTile.Type,
+                SpecialType = specialType
+            };
+
+            createdTile = new CreatedSpecialTileInfo {
+                Position = position,
+                Type = specialTile.Type,
+                SpecialType = specialTile.SpecialType
+            };
+
+            _boardTiles[y][x] = CreateSpecialTile(specialTile);
+            return true;
+        }
+
         public List<List<Tile>> StartGame(int boardWidth, int boardHeight) {
             _tilesTypes = new List<int> { 0, 1, 2, 3 };
             _boardTiles = CreateBoard(boardWidth, boardHeight, _tilesTypes);

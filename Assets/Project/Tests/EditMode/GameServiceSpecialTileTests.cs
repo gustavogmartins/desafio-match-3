@@ -149,6 +149,85 @@ namespace Gazeus.DesafioMatch3.Tests
             AssertBoardHasNoMatches(service.GetBoardForTests());
         }
 
+        [TestCase(TileSpecialType.ClearHorizontal)]
+        [TestCase(TileSpecialType.ClearVertical)]
+        [TestCase(TileSpecialType.ClearArea)]
+        public void TryCreateSpecialTile_ValidPosition_CreatesFunctionalSpecial(TileSpecialType specialType)
+        {
+            int[,] types = CreateBaseTypes();
+            GameService service = CreateService(types);
+
+            Assert.IsTrue(service.TryCreateSpecialTile(2, 2, specialType, out CreatedSpecialTileInfo createdTile));
+
+            Assert.AreEqual(new Vector2Int(2, 2), createdTile.Position);
+            Assert.AreEqual(types[2, 2], createdTile.Type);
+            Assert.AreEqual(specialType, createdTile.SpecialType);
+            Assert.IsTrue(service.IsSpecialTile(2, 2));
+
+            List<BoardSequence> sequences = service.ActivateSpecialTile(2, 2);
+
+            Assert.Greater(sequences.Count, 0);
+            switch (specialType)
+            {
+                case TileSpecialType.ClearHorizontal:
+                    AssertRemovedPositions(sequences[0], Row(2));
+                    break;
+
+                case TileSpecialType.ClearVertical:
+                    AssertRemovedPositions(sequences[0], Column(2));
+                    break;
+
+                case TileSpecialType.ClearArea:
+                    AssertRemovedPositions(sequences[0], Area3x3(2, 2));
+                    AssertSpecialEffect(sequences[0], new Vector2Int(2, 2), specialType, Area3x3(2, 2));
+                    break;
+            }
+        }
+
+        [Test]
+        public void TryCreateSpecialTile_InvalidPositionAndNoneType_ReturnFalseWithoutChangingBoard()
+        {
+            GameService service = CreateService(CreateBaseTypes());
+            List<List<Tile>> expectedBoard = service.GetBoardForTests();
+
+            Assert.IsFalse(service.TryCreateSpecialTile(-1, 2, TileSpecialType.ClearHorizontal, out _));
+            Assert.IsFalse(service.TryCreateSpecialTile(2, 2, TileSpecialType.None, out _));
+
+            AssertBoardsEqual(expectedBoard, service.GetBoardForTests());
+        }
+
+        [Test]
+        public void TryCreateSpecialTile_EmptyTile_ReturnsFalseWithoutChangingBoard()
+        {
+            int[,] types = CreateBaseTypes();
+            types[2, 2] = -1;
+            GameService service = CreateService(types);
+            List<List<Tile>> expectedBoard = service.GetBoardForTests();
+
+            Assert.IsFalse(service.TryCreateSpecialTile(2, 2, TileSpecialType.ClearArea, out _));
+
+            AssertBoardsEqual(expectedBoard, service.GetBoardForTests());
+        }
+
+        [Test]
+        public void TryCreateSpecialTile_ExistingSpecial_ReplacesActiveSpecialType()
+        {
+            GameService service = CreateService(
+                CreateBaseTypes(),
+                new SpecialPlacement(2, 2, TileSpecialType.ClearHorizontal));
+
+            Assert.IsTrue(service.TryCreateSpecialTile(2, 2, TileSpecialType.ClearArea, out CreatedSpecialTileInfo createdTile));
+
+            Assert.AreEqual(TileSpecialType.ClearArea, createdTile.SpecialType);
+            Assert.IsTrue(service.IsSpecialTile(2, 2));
+
+            List<BoardSequence> sequences = service.ActivateSpecialTile(2, 2);
+
+            Assert.Greater(sequences.Count, 0);
+            AssertRemovedPositions(sequences[0], Area3x3(2, 2));
+            AssertSpecialEffect(sequences[0], new Vector2Int(2, 2), TileSpecialType.ClearArea, Area3x3(2, 2));
+        }
+
         private static GameService CreateService(int[,] types, params SpecialPlacement[] specialPlacements)
         {
             GameService service = new();
@@ -287,6 +366,22 @@ namespace Gazeus.DesafioMatch3.Tests
                 for (int x = 0; x < board[y].Count; x++)
                 {
                     Assert.GreaterOrEqual(board[y][x].Type, 0, $"Expected tile at {x}, {y} to be filled.");
+                }
+            }
+        }
+
+        private static void AssertBoardsEqual(List<List<Tile>> expected, List<List<Tile>> actual)
+        {
+            Assert.AreEqual(expected.Count, actual.Count);
+            for (int y = 0; y < expected.Count; y++)
+            {
+                Assert.AreEqual(expected[y].Count, actual[y].Count);
+                for (int x = 0; x < expected[y].Count; x++)
+                {
+                    Assert.AreEqual(expected[y][x].Id, actual[y][x].Id, $"Unexpected tile id at {x}, {y}.");
+                    Assert.AreEqual(expected[y][x].Type, actual[y][x].Type, $"Unexpected tile type at {x}, {y}.");
+                    Assert.AreEqual(expected[y][x].SpecialType, actual[y][x].SpecialType,
+                        $"Unexpected special type at {x}, {y}.");
                 }
             }
         }

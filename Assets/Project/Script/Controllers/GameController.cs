@@ -65,6 +65,35 @@ namespace Gazeus.DesafioMatch3.Controllers
             onComplete?.Invoke();
         }
 
+        public bool TryCreateSpecialTileAtSelection(TileSpecialType specialType)
+        {
+            if (_isAnimating || _selectedX < 0 || _selectedY < 0)
+            {
+                return false;
+            }
+
+            if (!_gameService.TryCreateSpecialTile(
+                    _selectedX,
+                    _selectedY,
+                    specialType,
+                    out CreatedSpecialTileInfo createdSpecialTile))
+            {
+                return false;
+            }
+
+            _isAnimating = true;
+            ClearSelection();
+            ResetLastClick();
+
+            Tween markSpecialTileTween = _boardView.MarkSpecialTiles(new List<CreatedSpecialTileInfo>
+            {
+                createdSpecialTile
+            });
+            markSpecialTileTween.onComplete += () => _isAnimating = false;
+
+            return true;
+        }
+
         private void OnTileClick(int x, int y)
         {
             if (_isAnimating) return;
@@ -80,9 +109,7 @@ namespace Gazeus.DesafioMatch3.Controllers
             {
                 
                 if (_selectedX == x && _selectedY == y)  {
-                    _selectedX = -1;
-                    _selectedY = -1;
-                    _boardView.ClearSelectedTile();
+                    ClearSelection();
                     return;
                 }
                 
@@ -110,9 +137,7 @@ namespace Gazeus.DesafioMatch3.Controllers
                         {
                             _boardView.SwapTiles(toX, toY, fromX, fromY).onComplete += () => _isAnimating = false;
                         }
-                        _selectedX = -1;
-                        _selectedY = -1;
-                        _boardView.ClearSelectedTile();
+                        ClearSelection();
                     };
                 }
             }
@@ -135,13 +160,8 @@ namespace Gazeus.DesafioMatch3.Controllers
         private void PlaySpecialTileActivation(int x, int y)
         {
             _isAnimating = true;
-            _selectedX = -1;
-            _selectedY = -1;
-            _boardView.ClearSelectedTile();
-            
-            _lastClickedX = -1;
-            _lastClickedY = -1;
-            _lastClickTime = -1f;
+            ClearSelection();
+            ResetLastClick();
 
             List<BoardSequence> boardSequences = _gameService.ActivateSpecialTile(x, y);
             AnimateBoard(boardSequences, () => _isAnimating = false);
@@ -152,6 +172,20 @@ namespace Gazeus.DesafioMatch3.Controllers
             _lastClickedX = x;
             _lastClickedY = y;
             _lastClickTime = Time.unscaledTime;
+        }
+
+        private void ClearSelection()
+        {
+            _selectedX = -1;
+            _selectedY = -1;
+            _boardView.ClearSelectedTile();
+        }
+
+        private void ResetLastClick()
+        {
+            _lastClickedX = -1;
+            _lastClickedY = -1;
+            _lastClickTime = -1f;
         }
     }
 }

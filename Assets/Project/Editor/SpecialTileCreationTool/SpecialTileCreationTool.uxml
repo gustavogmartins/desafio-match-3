@@ -1,0 +1,18 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Project/Editor/SpecialTileCreationTool/SpecialTileCreationTool.uss?fileID=7433441132597879392&amp;guid=ee963f8890531b64ca90405301ee3d16&amp;type=3#SpecialTileCreationTool"/>
+    <ui:VisualElement name="MainPanel" style="flex-grow: 1;">
+        <ui:VisualElement name="HeaderPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="Instructions" style="flex-grow: 1; height: auto; max-height: none; margin-bottom: 10px; padding-bottom: 0;">
+                <ui:Label text="Essa ferramenta foi desenvolvida para criação de peças especiais em runtime.&#10;" style="height: 114px; -unity-font-definition: url(&quot;project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf?fileID=12800000&amp;guid=e3265ab4bf004d28a9537516768c1c75&amp;type=3#LiberationSans&quot;); white-space: normal; font-size: 20px; -unity-text-align: middle-center; -unity-text-outline-width: 0; -unity-text-outline-color: rgb(0, 0, 0);"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="Buttons" style="flex-grow: 1; margin-top: 5px; margin-bottom: 5px;">
+            <ui:Button text="Linha" name="ClearHorizontalButton" style="font-size: 20px; top: auto; margin-bottom: 10px;"/>
+            <ui:Button text="Coluna" name="ClearVerticalButton" style="font-size: 20px; top: auto; margin-bottom: 10px;"/>
+            <ui:Button text="Bomba 3x3" name="ClearAreaButton" style="font-size: 20px; justify-content: flex-start; top: auto; margin-bottom: 10px;"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="Status" style="flex-grow: 1; height: auto; max-height: none; margin-top: 5px;">
+            <ui:Label text="" name="StatusLabel" style="height: 114px; -unity-font-definition: url(&quot;project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf?fileID=12800000&amp;guid=e3265ab4bf004d28a9537516768c1c75&amp;type=3#LiberationSans&quot;); white-space: normal; font-size: 20px; -unity-text-align: middle-center; -unity-text-outline-width: 0; -unity-text-outline-color: rgb(0, 0, 0);"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
