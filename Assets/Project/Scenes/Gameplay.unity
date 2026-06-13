@@ -257,6 +257,7 @@ GameObject:
   - component: {fileID: 429446045}
   - component: {fileID: 429446044}
   - component: {fileID: 429446043}
+  - component: {fileID: 429446048}
   - component: {fileID: 429446047}
   m_Layer: 5
   m_Name: BoardContainer
@@ -302,7 +303,21 @@ MonoBehaviour:
   _vfxPrefabRepository: {fileID: 11400000, guid: 145cb177eefe8c748a335bfc43fa2752, type: 2}
   _tileSpotPrefab: {fileID: -4864831497923239132, guid: 6527630aaec5689489d14bfbb482fd0f, type: 3}
   _specialTileSpot: {fileID: 428960725}
-  _dissolveDuration: 0.25
+  _bombEffectView: {fileID: 429446048}
+  _dissolveDuration: 0.3
+--- !u!114 &429446048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 429446041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e47a74c386fd431380c751f5839062c1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _bombEffectParams: {fileID: 11400000, guid: 87198c0a261532743ab314217a41f98a, type: 2}
 --- !u!114 &429446044
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -762,7 +777,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1361904665}
   - component: {fileID: 1361904664}
-  - component: {fileID: 1361904666}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -802,20 +816,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1361904666
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1361904663}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d5b6a01e6254bf498af8a70c56a6f8f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _gameController: {fileID: 1361904664}
-  _isVisible: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

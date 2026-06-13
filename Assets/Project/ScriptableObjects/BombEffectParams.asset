@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 049cc4f2b4f14ae4a797ee3bf2f00c32, type: 3}
+  m_Name: BombEffectParams
+  m_EditorClassIdentifier: DesafioMatch3::Gazeus.DesafioMatch3.ScriptableObjects.BombEffectParams
+  _bombCenterVfxDelay: 0.08
+  _bombTilePulseDuration: 0.2
+  _bombAffectedTilePunchDuration: 0.22
+  _bombAffectedTileStagger: 0.23
