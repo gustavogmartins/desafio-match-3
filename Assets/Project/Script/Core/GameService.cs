@@ -126,7 +126,10 @@ namespace Gazeus.DesafioMatch3.Core {
 
             specialActivations.AddRange(GetSpecialActivationsFromMatches(board, matchGroups));
 
-            HashSet<Vector2Int> removedPositions = CollectSpecialEffectPositions(board, specialActivations);
+            HashSet<Vector2Int> removedPositions = CollectSpecialEffectPositions(
+                board,
+                specialActivations,
+                out List<SpecialEffectAnimationInfo> specialEffects);
             List<MatchGroup> normalMatchGroups = GetNormalMatchGroups(board, matchGroups);
             Dictionary<Vector2Int, SpecialTileCreationInfo> specialTilesToCreate =
                 GetSpecialTilesToCreate(normalMatchGroups, preferredSpecialPosition, removedPositions);
@@ -160,14 +163,17 @@ namespace Gazeus.DesafioMatch3.Core {
                 RemovedPositions = sortedRemovedPositions,
                 MovedTiles = movedTiles,
                 AddedTiles = addedTiles,
-                CreatedSpecialTiles = createdSpecialTiles
+                CreatedSpecialTiles = createdSpecialTiles,
+                SpecialEffects = specialEffects
             };
         }
 
         private HashSet<Vector2Int> CollectSpecialEffectPositions(
             List<List<Tile>> board,
-            List<SpecialActivation> initialSpecialActivations) {
+            List<SpecialActivation> initialSpecialActivations,
+            out List<SpecialEffectAnimationInfo> specialEffects) {
             HashSet<Vector2Int> removedPositions = new();
+            specialEffects = new List<SpecialEffectAnimationInfo>();
             Queue<SpecialActivation> pendingActivations = new();
             HashSet<int> queuedTileIds = new();
             HashSet<int> activatedTileIds = new();
@@ -193,6 +199,7 @@ namespace Gazeus.DesafioMatch3.Core {
                 activatedTileIds.Add(activatingTile.Id);
                 List<Vector2Int> effectPositions =
                     GetSpecialEffectPositions(board, activation.Position, activation.SpecialType);
+                List<Vector2Int> affectedPositions = new();
 
                 for (int i = 0; i < effectPositions.Count; i++) {
                     Vector2Int affectedPosition = effectPositions[i];
@@ -206,6 +213,7 @@ namespace Gazeus.DesafioMatch3.Core {
                     }
 
                     removedPositions.Add(affectedPosition);
+                    affectedPositions.Add(affectedPosition);
                     if (affectedTile.SpecialType == TileSpecialType.None) {
                         continue;
                     }
@@ -218,6 +226,14 @@ namespace Gazeus.DesafioMatch3.Core {
                         pendingActivations,
                         queuedTileIds,
                         activatedTileIds);
+                }
+
+                if (activation.SpecialType == TileSpecialType.ClearArea) {
+                    specialEffects.Add(new SpecialEffectAnimationInfo {
+                        Origin = activation.Position,
+                        SpecialType = activation.SpecialType,
+                        AffectedPositions = SortPositions(affectedPositions)
+                    });
                 }
             }
 

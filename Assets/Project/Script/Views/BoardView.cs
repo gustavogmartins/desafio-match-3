@@ -11,6 +11,12 @@ namespace Gazeus.DesafioMatch3.Views {
     public class BoardView : MonoBehaviour {
         private const int DestroyTileVfxIndex = 0;
         private const int SpecialTileAppearVfxIndex = 1;
+        private const int BombExplosionVfxIndex = 2;
+        
+        private const float BombCenterVfxDelay = 0.08f;
+        private const float BombTilePulseDuration = 0.2f;
+        private const float BombAffectedTilePunchDuration = 0.22f;
+        private const float BombAffectedTileStagger = 0.025f;
 
         public event Action<int, int> TileClicked;
         [SerializeField] private RectTransform _boardContainerRect;
@@ -170,6 +176,24 @@ namespace Gazeus.DesafioMatch3.Views {
             return sequence;
         }
 
+        public Tween PlaySpecialEffects(List<SpecialEffectAnimationInfo> specialEffects) {
+            Sequence sequence = DOTween.Sequence();
+            if (specialEffects == null) {
+                return sequence;
+            }
+
+            for (int i = 0; i < specialEffects.Count; i++) {
+                SpecialEffectAnimationInfo specialEffect = specialEffects[i];
+                if (specialEffect.SpecialType != TileSpecialType.ClearArea) {
+                    continue;
+                }
+
+                sequence.Join(CreateBombImpactAnimation(specialEffect));
+            }
+
+            return sequence;
+        }
+
         public Tween MoveTiles(List<MovedTileInfo> movedTiles) {
             GameObject[][] tiles = new GameObject[_tiles.Length][];
             for (int y = 0; y < _tiles.Length; y++) {
@@ -284,6 +308,94 @@ namespace Gazeus.DesafioMatch3.Views {
             return sequence;
         }
 
+        private Tween CreateBombImpactAnimation(SpecialEffectAnimationInfo specialEffect) {
+            Sequence sequence = DOTween.Sequence();
+            if (!TryGetTileWorldCenter(specialEffect.Origin, out Vector3 originWorldCenter)) {
+                return sequence;
+            }
+
+            GameObject bombTile = GetTile(specialEffect.Origin);
+            if (bombTile != null) {
+                sequence.Join(CreateBombTilePulse(bombTile.transform));
+            }
+
+            sequence.InsertCallback(BombCenterVfxDelay, () =>
+                PlayVfx(BombExplosionVfxIndex, originWorldCenter));
+            
+            sequence.Join(CreateBoardImpactShake());
+            sequence.Join(CreateAffectedTileReaction(specialEffect));
+
+            return sequence;
+        }
+
+        private static Tween CreateBombTilePulse(Transform bombTransform) {
+            Vector3 originalScale = bombTransform.localScale;
+            Quaternion originalRotation = bombTransform.localRotation;
+
+            bombTransform.DOKill(false);
+
+            Sequence sequence = DOTween.Sequence();
+            sequence.Append(
+                bombTransform
+                    .DOScale(originalScale * 1.28f, BombTilePulseDuration * 0.55f)
+                    .SetEase(Ease.OutBack));
+            sequence.Append(
+                bombTransform
+                    .DOScale(originalScale, BombTilePulseDuration * 0.45f)
+                    .SetEase(Ease.InOutSine));
+            sequence.Join(
+                bombTransform
+                    .DOPunchRotation(new Vector3(0f, 0f, 26f), BombTilePulseDuration, 8, 0.65f));
+            sequence.OnComplete(() => {
+                bombTransform.localScale = originalScale;
+                bombTransform.localRotation = originalRotation;
+            });
+
+            return sequence;
+        }
+        
+        private Tween CreateBoardImpactShake() {
+            if (_boardContainerRect == null) {
+                return DOTween.Sequence();
+            }
+
+            Vector2 originalAnchoredPosition = _boardContainerRect.anchoredPosition;
+            float cellSize = Mathf.Max(_boardContainer.cellSize.x, _boardContainer.cellSize.y);
+            float strength = Mathf.Clamp(cellSize * 0.08f, 4f, 10f);
+
+            return _boardContainerRect
+                .DOShakeAnchorPos(0.22f, strength, 18, 75f, false, true)
+                .OnComplete(() => _boardContainerRect.anchoredPosition = originalAnchoredPosition);
+        }
+
+        private Tween CreateAffectedTileReaction(SpecialEffectAnimationInfo specialEffect) {
+            Sequence sequence = DOTween.Sequence();
+            if (specialEffect.AffectedPositions == null) {
+                return sequence;
+            }
+
+            for (int i = 0; i < specialEffect.AffectedPositions.Count; i++) {
+                Vector2Int position = specialEffect.AffectedPositions[i];
+                if (position == specialEffect.Origin) {
+                    continue;
+                }
+
+                GameObject tile = GetTile(position);
+                if (tile == null) {
+                    continue;
+                }
+
+                float delay = Vector2Int.Distance(position, specialEffect.Origin) * BombAffectedTileStagger;
+                sequence.Insert(
+                    delay,
+                    tile.transform
+                        .DOPunchScale(Vector3.one * 1.18f, BombAffectedTilePunchDuration, 6, 0.6f)
+                        .SetEase(Ease.OutQuad));
+            }
+
+            return sequence;
+        }
+
         private static void RestoreSpecialTileToSpot(GameObject specialTileObject, TileSpotView tileSpot,
             TileSpecialType specialType) {
             Transform specialTileTransform = specialTileObject.transform;
@@ -305,6 +417,39 @@ namespace Gazeus.DesafioMatch3.Views {
                 TileSpecialType.ClearArea => 6,
                 _ => -1
             };
+        }
+
+        private GameObject GetTile(Vector2Int position) {
+            return IsValidTilePosition(position) ? _tiles[position.y][position.x] : null;
+        }
+
+        private bool TryGetTileWorldCenter(Vector2Int position, out Vector3 worldCenter) {
+            worldCenter = Vector3.zero;
+            if (!IsValidTileSpotPosition(position.x, position.y)) {
+                return false;
+            }
+
+            GameObject tile = GetTile(position);
+            Transform target = tile != null ? tile.transform : _tileSpots[position.y][position.x].transform;
+            worldCenter = GetTransformWorldCenter(target);
+            return true;
+        }
+
+        private bool IsValidTilePosition(Vector2Int position) {
+            return _tiles != null &&
+                   position.y >= 0 &&
+                   position.y < _tiles.Length &&
+                   position.x >= 0 &&
+                   position.x < _tiles[position.y].Length;
+        }
+
+        private Camera GetCanvasCamera() {
+            Canvas canvas = _boardContainerRect != null ? _boardContainerRect.GetComponentInParent<Canvas>() : null;
+            if (canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay) {
+                return null;
+            }
+
+            return canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
         }
 
         private void InitializeTilePools(int boardTileCount) {

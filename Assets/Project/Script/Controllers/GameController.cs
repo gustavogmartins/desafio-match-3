@@ -55,6 +55,7 @@ namespace Gazeus.DesafioMatch3.Controllers
             {
                 BoardSequence boardSequence = boardSequences[i];
 
+                yield return _boardView.PlaySpecialEffects(boardSequence.SpecialEffects).WaitForCompletion();
                 yield return _boardView.DestroyTiles(boardSequence.RemovedPositions).WaitForCompletion();
                 yield return _boardView.MarkSpecialTiles(boardSequence.CreatedSpecialTiles).WaitForCompletion();
                 yield return _boardView.MoveTiles(boardSequence.MovedTiles).WaitForCompletion();

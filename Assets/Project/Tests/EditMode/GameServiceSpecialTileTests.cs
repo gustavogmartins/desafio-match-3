@@ -61,6 +61,29 @@ namespace Gazeus.DesafioMatch3.Tests
 
             Assert.Greater(sequences.Count, 0);
             AssertRemovedPositions(sequences[0], Area3x3(2, 2));
+            AssertSpecialEffect(sequences[0], new Vector2Int(2, 2), TileSpecialType.ClearArea, Area3x3(2, 2));
+        }
+
+        [Test]
+        public void ActivateSpecialTile_ClearAreaInCorner_ReportsOnlyValidSpecialEffectPositions()
+        {
+            List<Vector2Int> expectedArea = new()
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(1, 0),
+                new Vector2Int(0, 1),
+                new Vector2Int(1, 1)
+            };
+
+            GameService service = CreateService(
+                CreateBaseTypes(),
+                new SpecialPlacement(0, 0, TileSpecialType.ClearArea));
+
+            List<BoardSequence> sequences = service.ActivateSpecialTile(0, 0);
+
+            Assert.Greater(sequences.Count, 0);
+            AssertRemovedPositions(sequences[0], expectedArea);
+            AssertSpecialEffect(sequences[0], new Vector2Int(0, 0), TileSpecialType.ClearArea, expectedArea);
         }
 
         [Test]
@@ -231,6 +254,29 @@ namespace Gazeus.DesafioMatch3.Tests
             foreach (Vector2Int position in expected)
             {
                 Assert.IsTrue(actual.Contains(position), $"Expected removed position {position}.");
+            }
+        }
+
+        private static void AssertSpecialEffect(
+            BoardSequence sequence,
+            Vector2Int expectedOrigin,
+            TileSpecialType expectedSpecialType,
+            List<Vector2Int> expectedAffectedPositions)
+        {
+            Assert.IsNotNull(sequence.SpecialEffects);
+            Assert.AreEqual(1, sequence.SpecialEffects.Count);
+
+            SpecialEffectAnimationInfo specialEffect = sequence.SpecialEffects[0];
+            Assert.AreEqual(expectedOrigin, specialEffect.Origin);
+            Assert.AreEqual(expectedSpecialType, specialEffect.SpecialType);
+
+            HashSet<Vector2Int> expected = new(expectedAffectedPositions);
+            HashSet<Vector2Int> actual = new(specialEffect.AffectedPositions);
+
+            Assert.AreEqual(expected.Count, actual.Count);
+            foreach (Vector2Int position in expected)
+            {
+                Assert.IsTrue(actual.Contains(position), $"Expected special effect position {position}.");
             }
         }
 

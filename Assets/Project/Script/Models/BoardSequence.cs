@@ -10,5 +10,6 @@ namespace Gazeus.DesafioMatch3.Models
         public List<Vector2Int> RemovedPositions { get; set; }
         public List<MatchGroup> MatchGroups { get; set; }
         public List<CreatedSpecialTileInfo> CreatedSpecialTiles { get; set; }
+        public List<SpecialEffectAnimationInfo> SpecialEffects { get; set; }
     }
 }

@@ -15,3 +15,4 @@ MonoBehaviour:
   _vfxPrefabList:
   - {fileID: 5006293025400780595, guid: d1aa493f2afec0d44ac4fbb59533078c, type: 3}
   - {fileID: 634935065243943409, guid: 6a9e85da67bc5de47b85acd67a104630, type: 3}
+  - {fileID: 5145454716805842167, guid: b83a527df40367943bca15c7a8d2aa31, type: 3}
